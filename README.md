@@ -53,42 +53,39 @@ Add these keys to `ios/Runner/Info.plist` to handle file saving and photo librar
 
 ### Download Method
 
+Downloads a file from the given [url] and saves it locally on the device.
+
+Supports Android and iOS platforms with proper handling of file storage locations:
+- On Android, saves using `flutter_file_downloader` package.
+- On iOS, can save either to the app documents directory or directly to Photos gallery.
+
+### Parameters:
+- [url]: The URL of the file to download.
+- [fileName]: Optional custom file name. Defaults to the last segment of the URL.
+- [saveToPhotos]: For iOS only. If true, saves the file to the Photos gallery instead of app documents directory.
+- [onProgress]: Optional callback providing download progress as a double (0.0 to 1.0).
+
+### Returns:
+- Returns a [Future<String>] with the saved file path on success.
+- Throws an [Exception] if the platform is unsupported or download fails.
+
+### Example:
 ```dart
-/// Downloads a file from the given [url] and saves it locally on the device.
-///
-/// Supports Android and iOS platforms with proper handling of file storage locations:
-/// - On Android, saves using `flutter_file_downloader` package.
-/// - On iOS, can save either to the app documents directory or directly to Photos gallery.
-///
-/// ### Parameters:
-/// - [url]: The URL of the file to download.
-/// - [fileName]: Optional custom file name. Defaults to the last segment of the URL.
-/// - [saveToPhotos]: For iOS only. If true, saves the file to the Photos gallery instead of app documents directory.
-/// - [onProgress]: Optional callback providing download progress as a double (0.0 to 1.0).
-///
-/// ### Returns:
-/// - Returns a [Future<String>] with the saved file path on success.
-/// - Throws an [Exception] if the platform is unsupported or download fails.
-///
-/// ### Example:
-/// ```dart
-/// final path = await CustomDownloader.download(
-///   url: 'https://example.com/file.mp4',
-///   fileName: 'my_video.mp4',
-///   saveToPhotos: true,
-///   onProgress: (progress) {
-///     print('Download progress: ${progress * 100}%');
-///   },
-/// );
-/// print('File saved at $path');
-/// ```
+final path = await CustomDownloader.download(
+  url: 'https://example.com/file.mp4',
+  fileName: 'my_video.mp4',
+  saveToPhotos: true,
+  onProgress: (progress) {
+    print('Download progress: ${progress * 100}%');
+  },
+);
+print('File saved at $path');
 ```
 
 ---
 
 ## Helpful Links
 
-- [Flutter Documentation](https://docs.flutter.dev/)
 - [flutter_file_downloader package](https://pub.dev/packages/flutter_file_downloader)
 - [image_gallery_saver_plus package](https://pub.dev/packages/image_gallery_saver_plus)
 - [dio package](https://pub.dev/packages/dio)
