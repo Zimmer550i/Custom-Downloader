@@ -21,17 +21,8 @@ Add these dependencies to your `pubspec.yaml`:
 ```yaml
 dio: ^5.8.0+1
 path_provider: ^2.1.5
-flutter_file_downloader: ^2.1.0
+flutter_file_dialog: ^3.0.2
 image_gallery_saver_plus: ^4.0.1
-```
-
-### Android Permissions
-
-Add the following permissions to your `android/app/src/main/AndroidManifest.xml`:
-
-```xml
-<uses-permission android:name="android.permission.INTERNET"/>
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 ```
 
 ### iOS Info.plist Entries

@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 
 class CustomDownloader {
@@ -15,14 +17,8 @@ class CustomDownloader {
   /// ```yaml
   /// dio: ^5.8.0+1
   /// path_provider: ^2.1.5
-  /// flutter_file_downloader: ^2.1.0
+  /// flutter_file_dialog: ^3.0.2
   /// image_gallery_saver_plus: ^4.0.1
-  /// ```
-  ///
-  /// ### Android Permissions (add to AndroidManifest.xml):
-  /// ```xml
-  /// <uses-permission android:name="android.permission.INTERNET"/>
-  /// <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
   /// ```
   ///
   /// ### iOS Info.plist entries (add to ios/Runner/Info.plist):
@@ -69,7 +65,7 @@ class CustomDownloader {
       fileName = url.split("/").last;
     }
     if (Platform.isAndroid) {
-      return _androidDownload(url, fileName, onProgress);
+      return _androidDownloadWithDio(url, fileName, onProgress);
     } else if (Platform.isIOS) {
       if (saveToPhotos) {
         return _iosDownloadToPhotos(
@@ -89,24 +85,69 @@ class CustomDownloader {
     }
   }
 
-  static Future<String> _androidDownload(
+  Future<String?> saveFileToDownloads(
+    Uint8List fileBytes,
+    String fileName,
+  ) async {
+    final params = SaveFileDialogParams(data: fileBytes, fileName: fileName);
+
+    final savedFilePath = await FlutterFileDialog.saveFile(params: params);
+
+    return savedFilePath;
+  }
+
+  static Future<String> _androidDownloadWithDio(
     String url,
     String fileName,
     void Function(double)? onProgress,
   ) async {
-    final file = await FileDownloader.downloadFile(
-      url: url,
-      name: fileName,
-      onProgress: (fileName, progress) {
-        if (onProgress != null) {
-          onProgress(progress);
-        }
-      },
-    );
-    if (file != null) {
-      return file.path;
-    } else {
-      throw Exception('Download failed!');
+    try {
+      final dio = Dio();
+      // ignore: deprecated_member_use
+      (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate = (
+        client,
+      ) {
+        client.badCertificateCallback =
+            (cert, host, port) => true;
+        return null; 
+      };
+
+      final response = await dio.get<Uint8List>(
+        url,
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {'User-Agent': 'Mozilla/5.0 (Flutter App)', 'Accept': '*/*'},
+          followRedirects: true,
+          validateStatus: (status) {
+            return status != null && status < 500;
+          },
+        ),
+        onReceiveProgress: (received, total) {
+          if (onProgress != null && total != -1) {
+            onProgress(received / total);
+          }
+        },
+      );
+
+      final fileBytes = response.data;
+
+      if (fileBytes == null) {
+        throw Exception('Failed to download file bytes');
+      }
+
+      // Save the file bytes using the existing saveFileToDownloads method
+      final savedFilePath = await CustomDownloader().saveFileToDownloads(
+        fileBytes,
+        fileName,
+      );
+
+      if (savedFilePath == null) {
+        throw Exception('File save was cancelled or failed');
+      }
+
+      return savedFilePath;
+    } catch (e) {
+      throw Exception('Download failed: $e');
     }
   }
 

@@ -131,7 +131,6 @@ class _DownloadPageState extends State<DownloadPage> {
                     isLoading = false;
                   });
                 } catch (e) {
-                  print(e.toString());
                   ScaffoldMessenger.of(
                     // ignore: use_build_context_synchronously
                     context,
