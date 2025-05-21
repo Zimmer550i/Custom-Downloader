@@ -85,7 +85,7 @@ class CustomDownloader {
     }
   }
 
-  Future<String?> saveFileToDownloads(
+  Future<String?> _saveFileToDownloads(
     Uint8List fileBytes,
     String fileName,
   ) async {
@@ -103,13 +103,12 @@ class CustomDownloader {
   ) async {
     try {
       final dio = Dio();
-      // ignore: deprecated_member_use
-      (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate = (
-        client,
-      ) {
+
+      (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+        final client = HttpClient();
         client.badCertificateCallback =
-            (cert, host, port) => true;
-        return null; 
+            (X509Certificate cert, String host, int port) => true;
+        return client;
       };
 
       final response = await dio.get<Uint8List>(
@@ -136,7 +135,7 @@ class CustomDownloader {
       }
 
       // Save the file bytes using the existing saveFileToDownloads method
-      final savedFilePath = await CustomDownloader().saveFileToDownloads(
+      final savedFilePath = await CustomDownloader()._saveFileToDownloads(
         fileBytes,
         fileName,
       );
@@ -157,6 +156,14 @@ class CustomDownloader {
     void Function(double)? onProgress,
   }) async {
     final dio = Dio();
+
+    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+      return client;
+    };
+
     final tempDir = await getTemporaryDirectory();
     final tempPath = '${tempDir.path}/$fileName';
 
@@ -183,6 +190,14 @@ class CustomDownloader {
     void Function(double)? onProgress,
   }) async {
     final dio = Dio();
+
+    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+      return client;
+    };
+
     final dir = await getApplicationDocumentsDirectory();
     final savePath = '${dir.path}/$fileName';
 
